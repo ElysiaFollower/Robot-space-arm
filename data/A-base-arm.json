@@ -1,0 +1,68 @@
+{
+    "root_name": "base",
+    "joints": [
+      {
+        "name": "base",
+        "type": "fixed",
+        "offset": [0.0, 0.0, 0.0],
+        "quaternion": [1.0, 0.0, 0.0, 0.0]
+      },
+      {
+        "name": "J1-A",
+        "type": "revolute",
+        "parent": "base",
+        "offset": [0.0, 0.0, 0.0],
+        "axis": [0.0, 0.0, 1.0]
+      },
+      {
+        "name": "J2",
+        "type": "revolute",
+        "parent": "J1-A",
+        "offset": [0.0, 0.0, 120],
+        "axis": [0.0, -1.0, 0.0]
+      },
+      {
+        "name": "J3",
+        "type": "revolute",
+        "parent": "J2",
+        "offset": [0.0, -100.0, 0.0],
+        "axis": [-1.0, 0.0, 0.0]
+      },
+      {
+        "name": "J4",
+        "type": "revolute",
+        "parent": "J3",
+        "offset": [-150.0, 0.0, 400.0],
+        "axis": [-1.0, 0.0, 0.0]
+      },
+      {
+        "name": "J5",
+        "type": "revolute",
+        "parent": "J4",
+        "offset": [-150.0, 0.0, -400.0],
+        "axis": [-1.0, 0.0, 0.0]
+      },
+      {
+        "name": "J6",
+        "type": "revolute",
+        "parent": "J5",
+        "offset": [0.0, 100.0, 0.0],
+        "axis": [0.0, -1.0, 0.0]
+      },
+      {
+        "name": "J7-B",
+        "type": "revolute",
+        "parent": "J6",
+        "offset": [0.0, 0.0, -120.0],
+        "axis": [0.0, 0.0, 1.0]
+      },
+      {
+        "name": "EE",
+        "type": "fixed",
+        "parent": "J7-B",
+        "offset": [0.0, 0.0, 0.0],
+        "quaternion": [1.0, 0.0, 0.0, 0.0]
+      }
+    ]
+}
+  

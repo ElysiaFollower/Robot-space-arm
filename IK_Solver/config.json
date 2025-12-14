@@ -1,0 +1,11 @@
+{
+  "skeleton_path": "../data/ZJU-I-skeleton.json",
+  "targets_path": "../data/circle_targets.json",
+  "output_path": "./output/animation.json",
+  "solve_mode": 1,
+  "max_iterations": 100,
+  "position_tolerance": 1e-3,
+  "orientation_tolerance": 1e-2,
+  "damping": 0.001,
+  "enable_line_search": true
+}
