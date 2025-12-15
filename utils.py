@@ -116,69 +116,72 @@ def angle_interpolate_3(start, mid, end, t_start, t_mid, t_end, t):
     elif diff_end < -math.pi:
         end_processed = end + 2 * math.pi
 
+    # Build constraint matrix (12 equations)
+    A = np.zeros((12, 12))
+    b = np.zeros(12)
+    
+    # Start point constraints (position, velocity, acceleration)
+    A[0, 0:6] = [1, 0, 0, 0, 0, 0]  # position
+    A[1, 0:6] = [0, 1, 0, 0, 0, 0]  # velocity
+    A[2, 0:6] = [0, 0, 2, 0, 0, 0]  # acceleration
+    b[0] = start
+    b[1] = 0  # v_start = 0
+    b[2] = 0  # a_start = 0
+    
+    # Mid point (t=T1)
+    t1 = T1
+    A[3, 0:6] = [1, t1, t1**2, t1**3, t1**4, t1**5]  # position
+    A[4, 0:6] = [0, 1, 2*t1, 3*t1**2, 4*t1**3, 5*t1**4]  # velocity
+    A[5, 0:6] = [0, 0, 2, 6*t1, 12*t1**2, 20*t1**3]  # acceleration
+    b[3] = mid_processed
+    
+    # Second segment start (t=0)
+    A[6, 6:12] = [1, 0, 0, 0, 0, 0]  # position
+    A[4, 6:12] = [0, -1, 0, 0, 0, 0]  # velocity (continuity)
+    A[5, 6:12] = [0, 0, -2, 0, 0, 0]  # acceleration (continuity)
+    A[7, 6:12] = [0, 1, 0, 0, 0, 0]  # velocity
+    A[8, 6:12] = [0, 0, 2, 0, 0, 0]  # acceleration
+    b[6] = mid_processed
+    b[7] = 0.5 * ((mid_processed - start)/T1 + (end_processed - mid_processed)/T2)  # mid velocity
+    b[8] = ((end_processed - mid_processed)/T2 - (mid_processed - start)/T1) / (T1 + T2) * 2
+    
+    # End point (t=T2)
+    t2 = T2
+    A[9, 6:12] = [1, t2, t2**2, t2**3, t2**4, t2**5]  # position
+    A[10, 6:12] = [0, 1, 2*t2, 3*t2**2, 4*t2**3, 5*t2**4]  # velocity
+    A[11, 6:12] = [0, 0, 2, 6*t2, 12*t2**2, 20*t2**3]  # acceleration
+    b[9] = end_processed
+    b[10] = 0  # v_end = 0
+    b[11] = 0  # a_end = 0
+    
+    # Solve linear system
+    x = np.linalg.solve(A, b)
+    
+    # Extract coefficients for both segments
+    coeffs1 = x[0:6]  # First segment coefficients
+    coeffs2 = x[6:12]  # Second segment coefficients
+    
     # First segment: start to mid
     if t <= t_mid:
         tau = t - t_start
-
-        # Calculate quintic polynomial coefficients for first segment
-        a0 = start
-        a1 = 0  # v_start = 0
-        a2 = 0  # a_start = 0
-
-        T1_2 = T1 * T1
-        T1_3 = T1_2 * T1
-        T1_4 = T1_3 * T1
-        T1_5 = T1_4 * T1
-
-        # Estimate velocity at mid point
-        v_mid = 0.5 * ((mid_processed - start) / T1 + (end_processed - mid_processed) / T2)
-
-        a3 = (20 * (mid_processed - start) - (8 * v_mid + 12 * 0) * T1) / (2 * T1_3)
-        a4 = (30 * (start - mid_processed) + (14 * v_mid + 16 * 0) * T1) / (2 * T1_4)
-        a5 = (12 * (mid_processed - start) - (6 * v_mid + 6 * 0) * T1) / (2 * T1_5)
-
-        # Evaluate quintic polynomial
         angle = (
-            a0
-            + a1 * tau
-            + a2 * tau * tau
-            + a3 * tau * tau * tau
-            + a4 * tau * tau * tau * tau
-            + a5 * tau * tau * tau * tau * tau
+            coeffs1[0]
+            + coeffs1[1] * tau
+            + coeffs1[2] * tau * tau
+            + coeffs1[3] * tau * tau * tau
+            + coeffs1[4] * tau * tau * tau * tau
+            + coeffs1[5] * tau * tau * tau * tau * tau
         )
-
     # Second segment: mid to end
     else:
         tau = t - t_mid
-
-        # Calculate quintic polynomial coefficients for second segment
-        a0 = mid_processed
-        # Estimate velocity at mid point
-        v_mid = 0.5 * ((mid_processed - start) / T1 + (end_processed - mid_processed) / T2)
-        a1 = v_mid
-        # Estimate acceleration at mid point
-        a_mid = ((end_processed - mid_processed) / T2 - (mid_processed - start) / T1) / (T1 + T2) * 2
-        a2 = a_mid / 2
-
-        T2_2 = T2 * T2
-        T2_3 = T2_2 * T2
-        T2_4 = T2_3 * T2
-        T2_5 = T2_4 * T2
-
-        a3 = (20 * (end_processed - mid_processed) - (8 * 0 + 12 * v_mid) * T2 - (3 * a_mid - 0) * T2_2) / (2 * T2_3)
-        a4 = (30 * (mid_processed - end_processed) + (14 * 0 + 16 * v_mid) * T2 + (3 * a_mid - 2 * 0) * T2_2) / (
-            2 * T2_4
-        )
-        a5 = (12 * (end_processed - mid_processed) - (6 * 0 + 6 * v_mid) * T2 - (0 - a_mid) * T2_2) / (2 * T2_5)
-
-        # Evaluate quintic polynomial
         angle = (
-            a0
-            + a1 * tau
-            + a2 * tau * tau
-            + a3 * tau * tau * tau
-            + a4 * tau * tau * tau * tau
-            + a5 * tau * tau * tau * tau * tau
+            coeffs2[0]
+            + coeffs2[1] * tau
+            + coeffs2[2] * tau * tau
+            + coeffs2[3] * tau * tau * tau
+            + coeffs2[4] * tau * tau * tau * tau
+            + coeffs2[5] * tau * tau * tau * tau * tau
         )
 
     # Normalize angle to [-pi, pi]

@@ -130,22 +130,48 @@ while (t := sim.getSimulationTime()) < TOTAL_TIME:
         # segment_idx=2: 从关键点1到关键点2
         # segment_idx=3: 从关键点2到关键点3
         # segment_idx=4: 从关键点3到关键点4
-        if segment_idx < len(step1_angles):
-            start_angles = [0.0] * 7 if segment_idx == 0 else step1_angles[segment_idx - 1]
-            end_angles = step1_angles[segment_idx]
-            t_start = cumulative_times[segment_idx]
-            t_end = cumulative_times[segment_idx+1]
+        
+        # 关键点 1-2-3 使用 interpolate_3 插值（从关键点1到关键点3，经过关键点2）
+        if segment_idx >= 2 and segment_idx <= 3:
+            # 使用关键点1、2、3进行插值
+            start_angles = step1_angles[1]  # 关键点1
+            mid_angles = step1_angles[2]    # 关键点2
+            end_angles = step1_angles[3]     # 关键点3
             
-            #对每个关节进行五次多项式插值
+            t_start = cumulative_times[2]   # 关键点1的时间
+            t_mid = cumulative_times[3]     # 关键点2的时间
+            t_end = cumulative_times[4]     # 关键点3的时间
+            
+            # 对每个关节进行三次插值
             for joint_idx in range(7):
-                interpolated_angle = utils.angle_interpolate_2(
+                interpolated_angle = utils.angle_interpolate_3(
                     start_angles[joint_idx],
+                    mid_angles[joint_idx],
                     end_angles[joint_idx],
                     t_start,
+                    t_mid,
                     t_end,
                     t
                 )
                 sim.setJointPosition(B_base_joints[joint_idx], interpolated_angle)
+        else:
+            # 其他关键点使用原来的 interpolate_2 插值
+            if segment_idx < len(step1_angles):
+                start_angles = [0.0] * 7 if segment_idx == 0 else step1_angles[segment_idx - 1]
+                end_angles = step1_angles[segment_idx]
+                t_start = cumulative_times[segment_idx]
+                t_end = cumulative_times[segment_idx+1]
+                
+                #对每个关节进行五次多项式插值
+                for joint_idx in range(7):
+                    interpolated_angle = utils.angle_interpolate_2(
+                        start_angles[joint_idx],
+                        end_angles[joint_idx],
+                        t_start,
+                        t_end,
+                        t
+                    )
+                    sim.setJointPosition(B_base_joints[joint_idx], interpolated_angle)
     else:  # step2: 5-9
         # 检查step1是否完成，如果完成则切换基座到step2需要的基座（A-base/L基座）
         if not step1_finished:
@@ -160,26 +186,52 @@ while (t := sim.getSimulationTime()) < TOTAL_TIME:
         # step2_segment_idx=2: 从关键点1到关键点2
         # step2_segment_idx=3: 从关键点2到关键点3
         # step2_segment_idx=4: 从关键点3到关键点4
-        if step2_segment_idx < len(step2_angles):
-            # 当从Step1切换到Step2的第一个关键点时，直接使用step2的第一个关键点角度作为起始角度
-            # 注意：在CoppeliaSim中，关节角度是相对于关节本身的局部坐标系定义的
-            # 切换基座后，虽然关节顺序变了，但每个关节的角度值应该保持不变
-            # 所以这里直接使用step2的角度，确保start_angles == end_angles，插值不会产生不必要的运动
-            start_angles = step2_angles[0] if step2_segment_idx == 0 else step2_angles[step2_segment_idx - 1]
-            end_angles = step2_angles[step2_segment_idx]
-            t_start = cumulative_times[segment_idx]
-            t_end = cumulative_times[segment_idx + 1]
-
-            # 对每个关节进行五次多项式插值
+        
+        # 关键点 6-7-8 使用 interpolate_3 插值（从关键点6到关键点8，经过关键点7）
+        if segment_idx >= 7 and segment_idx <= 8:
+            # 使用关键点6、7、8进行插值
+            start_angles = step2_angles[1]  # 关键点6 (step2的第2个点)
+            mid_angles = step2_angles[2]    # 关键点7 (step2的第3个点)
+            end_angles = step2_angles[3]     # 关键点8 (step2的第4个点)
+            
+            t_start = cumulative_times[7]   # 关键点6的时间
+            t_mid = cumulative_times[8]     # 关键点7的时间
+            t_end = cumulative_times[9]     # 关键点8的时间
+            
+            # 对每个关节进行三次插值
             for joint_idx in range(7):
-                interpolated_angle = utils.angle_interpolate_2(
+                interpolated_angle = utils.angle_interpolate_3(
                     start_angles[joint_idx],
+                    mid_angles[joint_idx],
                     end_angles[joint_idx],
                     t_start,
+                    t_mid,
                     t_end,
                     t
                 )
                 sim.setJointPosition(A_base_joints[joint_idx], interpolated_angle)
+        else:
+            # 其他关键点使用原来的 interpolate_2 插值
+            if step2_segment_idx < len(step2_angles):
+                # 当从Step1切换到Step2的第一个关键点时，直接使用step2的第一个关键点角度作为起始角度
+                # 注意：在CoppeliaSim中，关节角度是相对于关节本身的局部坐标系定义的
+                # 切换基座后，虽然关节顺序变了，但每个关节的角度值应该保持不变
+                # 所以这里直接使用step2的角度，确保start_angles == end_angles，插值不会产生不必要的运动
+                start_angles = step2_angles[0] if step2_segment_idx == 0 else step2_angles[step2_segment_idx - 1]
+                end_angles = step2_angles[step2_segment_idx]
+                t_start = cumulative_times[segment_idx]
+                t_end = cumulative_times[segment_idx + 1]
+
+                # 对每个关节进行五次多项式插值
+                for joint_idx in range(7):
+                    interpolated_angle = utils.angle_interpolate_2(
+                        start_angles[joint_idx],
+                        end_angles[joint_idx],
+                        t_start,
+                        t_end,
+                        t
+                    )
+                    sim.setJointPosition(A_base_joints[joint_idx], interpolated_angle)
 
 
 
