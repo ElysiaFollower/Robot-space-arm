@@ -213,11 +213,7 @@ while (t := sim.getSimulationTime()) < TOTAL_TIME:
         else:
             # 其他关键点使用原来的 interpolate_2 插值
             if step2_segment_idx < len(step2_angles):
-                # 当从Step1切换到Step2的第一个关键点时，直接使用step2的第一个关键点角度作为起始角度
-                # 注意：在CoppeliaSim中，关节角度是相对于关节本身的局部坐标系定义的
-                # 切换基座后，虽然关节顺序变了，但每个关节的角度值应该保持不变
-                # 所以这里直接使用step2的角度，确保start_angles == end_angles，插值不会产生不必要的运动
-                start_angles = step2_angles[0] if step2_segment_idx == 0 else step2_angles[step2_segment_idx - 1]
+                start_angles = [-a for a in step1_angles[-1][::-1]] if step2_segment_idx == 0 else step2_angles[step2_segment_idx - 1]
                 end_angles = step2_angles[step2_segment_idx]
                 t_start = cumulative_times[segment_idx]
                 t_end = cumulative_times[segment_idx + 1]
