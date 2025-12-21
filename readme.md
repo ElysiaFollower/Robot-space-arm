@@ -9,6 +9,9 @@
 - `main.py` - 运动仿真模块，在 CoppeliaSim 中控制机械臂运动
   - 运行方法：先在 CoppeliaSim 中打开 `attachment/SpaceRobot.ttt` 文件，然后运行 `python main.py` 即可查看仿真
 
+## 仿真结果
+
+- `video/demo.mp4`
 
 ## 工具文件
 
