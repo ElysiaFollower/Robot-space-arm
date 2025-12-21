@@ -207,6 +207,7 @@ def switch_base(sim, chain, old_joints, new_joints):
     # 记录新基的位置（chain[0]就是新基）
     new_base = chain[0]
     new_base_position_before = sim.getObjectPosition(new_base, sim.handle_world)
+    new_base_orientation_before = sim.getObjectOrientation(new_base, sim.handle_world)
     
     # 读取旧基座下的关节角度
     current_old_angles = [sim.getJointPosition(joint) for joint in old_joints]
@@ -234,7 +235,7 @@ def switch_base(sim, chain, old_joints, new_joints):
     
     # 恢复新基位置（确保换基前后位置不变）
     sim.setObjectPosition(new_base, new_base_position_before, sim.handle_world)
-
+    sim.setObjectOrientation(new_base, new_base_orientation_before, sim.handle_world)
 
 def quaternion_to_rotation_matrix(quaternion: Union[np.ndarray, list, tuple]) -> np.ndarray:
     """
